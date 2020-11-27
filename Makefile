@@ -1,4 +1,4 @@
-VERSION=0.0.1
+VERSION=0.0.2
 LDFLAGS=-ldflags "-w -s -X main.Version=${VERSION}"
 
 all: check-diff
