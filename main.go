@@ -10,19 +10,22 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/mackerelio/checkers"
 )
 
-// Version by Makefile
-var Version string
+// version by Makefile
+var version string
 
 type cmdOpts struct {
 	OptArgs       []string
 	OptCommand    string
 	OptIdentifier string `long:"identifier" description:"indetify a file store the command result with given string"`
+	OptWarn       bool   `short:"w" long:"warn" description:"Set the error level to warning"`
+	Version       bool   `short:"v" long:"version" description:"Show version"`
 }
 
 func runCmd(curFile *os.File, opts cmdOpts) error {
@@ -135,25 +138,37 @@ func checkDiff(opts cmdOpts) *checkers.Checker {
 		} else {
 			msg = fmt.Sprintf("found difference: ```%s```\n", diffRetString)
 		}
+		if opts.OptWarn {
+			return checkers.Warning(msg)
+		}
 		return checkers.Critical(msg)
 	}
-
 	return checkers.Critical(diffError.Error())
+}
+
+func printVersion() {
+	fmt.Printf(`%s %s
+Compiler: %s %s
+`,
+		os.Args[0],
+		version,
+		runtime.Compiler,
+		runtime.Version())
 }
 
 func main() {
 	opts := cmdOpts{}
-	psr := flags.NewParser(&opts, flags.Default)
+	psr := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash)
 	psr.Usage = "[OPTIONS] -- command args1 args2"
 	args, err := psr.Parse()
+	if opts.Version {
+		printVersion()
+		os.Exit(0)
+	}
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	if len(args) == 0 {
-		psr.WriteHelp(os.Stdout)
-		os.Exit(1)
-	}
-
 	opts.OptCommand = args[0]
 	if len(args) > 1 {
 		opts.OptArgs = args[1:]
