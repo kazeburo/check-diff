@@ -169,6 +169,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+	if len(args) == 0 {
+		psr.WriteHelp(os.Stderr)
+		os.Exit(1)
+	}
 	opts.OptCommand = args[0]
 	if len(args) > 1 {
 		opts.OptArgs = args[1:]
